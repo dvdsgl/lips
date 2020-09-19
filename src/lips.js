@@ -605,6 +605,32 @@
         };
     }
     // ----------------------------------------------------------------------
+    function Thunk(fn, cont = () => {}) {
+        this.fn = fn;
+        this.cont = cont;
+    }
+    // ----------------------------------------------------------------------
+    Thunk.prototype.toString = function() {
+        return '#<Thunk>';
+    };
+    // ----------------------------------------------------------------------
+    function trampoline(fn) {
+        return function(...args) {
+            return unwind(fn.apply(this, args));
+        };
+    }
+    // ----------------------------------------------------------------------
+    function unwind(result) {
+        while (result instanceof Thunk) {
+            const thunk = result;
+            result = result.fn();
+            if (!(result instanceof Thunk)) {
+                thunk.cont();
+            }
+        }
+        return result;
+    }
+    // ----------------------------------------------------------------------
     function tokenize(str, extra, formatter = multiline_formatter) {
         if (str instanceof LString) {
             str = str.toString();
@@ -1829,7 +1855,7 @@
         return Object.keys(obj).concat(Object.getOwnPropertySymbols(obj));
     }
     // ----------------------------------------------------------------------
-    function toString(obj, quote, skip_cycles) {
+    function toString(obj, quote, skip_cycles, ...pair_args) {
         if (typeof jQuery !== 'undefined' &&
             obj instanceof jQuery.fn.init) {
             return '#<jQuery(' + obj.length + ')>';
@@ -1842,7 +1868,7 @@
             if (!skip_cycles) {
                 obj.markCycles();
             }
-            return obj.toString(quote);
+            return obj.toString(quote, ...pair_args);
         }
         if (Number.isNaN(obj)) {
             return '+nan.0';
@@ -1966,7 +1992,7 @@
                 }
             }
         }
-        function detect(pair, parents) {
+        const detect = trampoline(function detect(pair, parents) {
             if (pair instanceof Pair) {
                 delete pair.ref;
                 delete pair.cycles;
@@ -1974,14 +2000,16 @@
                 parents.push(pair);
                 var car = set(pair, 'car', pair.car, parents);
                 var cdr = set(pair, 'cdr', pair.cdr, parents);
-                if (!car) {
-                    detect(pair.car, parents.slice());
-                }
-                if (!cdr) {
-                    detect(pair.cdr, parents.slice());
-                }
+                return new Thunk(() => {
+                    if (!car) {
+                        detect(pair.car, parents.slice());
+                    }
+                    if (!cdr) {
+                        detect(pair.cdr, parents.slice());
+                    }
+                });
             }
-        }
+        });
         function mark_node(node, type) {
             if (node.cycles[type] instanceof Pair) {
                 const count = ref_nodes.indexOf(node.cycles[type]);
@@ -2000,42 +2028,72 @@
     }
 
     // ----------------------------------------------------------------------
-    Pair.prototype.toString = function(quote, rest) {
-        var arr = [];
-        if (this.ref) {
-            arr.push(this.ref + '(');
-        } else if (!rest) {
-            arr.push('(');
-        }
-        var value;
-        if (this.cycles && this.cycles.car) {
-            value = this.cycles.car;
-        } else {
-            value = toString(this.car, quote, true);
-        }
-        if (value !== undefined) {
-            arr.push(value);
-        }
-        if (this.cdr instanceof Pair) {
-            if (this.cycles && this.cycles.cdr) {
-                arr.push(' . ');
-                arr.push(this.cycles.cdr);
-            } else {
-                if (this.cdr.ref) {
-                    arr.push(' . ');
-                } else {
-                    arr.push(' ');
-                }
-                const cdr = this.cdr.toString(quote, true);
-                arr.push(cdr);
+    // trampoline based recursive pair to string that don't overflow the stack
+    // ----------------------------------------------------------------------
+    const pair_to_string = (function() {
+        const prefix = (pair, rest) => {
+            var result = [];
+            if (pair.ref) {
+                result.push(pair.ref + '(');
+            } else if (!rest) {
+                result.push('(');
             }
-        } else if (this.cdr !== nil) {
-            arr = arr.concat([' . ', toString(this.cdr, quote, true)]);
-        }
-        if (!rest || this.ref) {
-            arr.push(')');
-        }
-        return arr.join('');
+            return result;
+        };
+        const postfix = (pair, rest) => {
+            if (!rest || pair.ref) {
+                return [')'];
+            }
+            return [];
+        };
+        return trampoline(function pairToString(pair, quote, extra = {}) {
+            const {
+                nested,
+                result = [],
+                cont = () => {
+                    result.push(...postfix(pair, nested));
+                }
+            } = extra;
+            result.push(...prefix(pair, nested));
+            let car;
+            if (pair.cycles && pair.cycles.car) {
+                car = pair.cycles.car;
+            } else {
+                car = toString(pair.car, quote, true, { nested: false, result, cont });
+            }
+            if (car !== undefined) {
+                result.push(car);
+            }
+            return new Thunk(() => {
+                if (pair.cdr instanceof Pair) {
+                    if (pair.cycles && pair.cycles.cdr) {
+                        result.push(' . ');
+                        result.push(pair.cycles.cdr);
+                    } else {
+                        if (pair.cdr.ref) {
+                            result.push(' . ');
+                        } else {
+                            result.push(' ');
+                        }
+                        return pairToString(pair.cdr, quote, {
+                            nested: true,
+                            result,
+                            cont
+                        });
+                    }
+                } else if (pair.cdr !== nil) {
+                    result.push(' . ');
+                    result.push(toString(pair.cdr, quote));
+                }
+            }, cont);
+        });
+    })();
+
+    // ----------------------------------------------------------------------
+    Pair.prototype.toString = function(quote) {
+        var result = [];
+        pair_to_string(this, quote, {result});
+        return result.join('');
     };
 
     // ----------------------------------------------------------------------
