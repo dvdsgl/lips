@@ -1,6 +1,6 @@
-#!/usr/bin/env -S node --no-deprecation
+#!/usr/bin/env -S node --no-deprecation --experimental-import-meta-resolve --trace-warnings
 
-const {
+import {
     exec,
     Formatter,
     balanced_parenthesis,
@@ -17,16 +17,17 @@ const {
     env,
     banner,
     InputPort,
-    OutputPort } = require('../src/lips');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { format } = require('util');
-const readline = require('readline');
-var highlight = require('prism-cli');
-var Prism = require('prismjs');
-require('prismjs/components/prism-scheme.min.js');
-require('../lib/js/prism.js');
+    OutputPort } from '../src/lips.js';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { format } from 'util';
+import readline from 'readline';
+import highlight from 'prism-cli';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-scheme.min.js';
+import '../lib/js/prism.js';
+import { createRequire } from 'module';
 
 const kDebounceHistoryMS = 15;
 
@@ -103,6 +104,7 @@ function run(code, interpreter, dynamic = false, env = null) {
         console.error('Thrown exception is in global exception variable, use ' +
                       '(display exception.stack) to display JS stack trace');
         log_error(e.message);
+        console.log(e.stack);
         if (e.code) {
             strace = e.code.map((line, i) => {
                 var prefix = `[${i+1}]: `;
@@ -131,6 +133,8 @@ function print(result) {
 
 function boostrap(interpreter) {
     var list = ['./lib/bootstrap.scm', './lib/R5RS.scm', './lib/R7RS.scm'];
+
+    const require = createRequire(import.meta.url);
     return (function next() {
         var name = list.shift();
         if (name) {
@@ -141,10 +145,10 @@ function boostrap(interpreter) {
                 try {
                     path = require.resolve(`../${name}`);
                 } catch (e) {
-                    path = require.resolve(`@jcubic/lips/../${name}`);
+                    path = require.resolve(`@jcubic/lips/${name}`);
                 }
             }
-            var data = fs.readFileSync(path);
+            var data = fs.readFileSync(path).toString();
             return run(data, interpreter, false, env.parent).then(next);
         }
     })();

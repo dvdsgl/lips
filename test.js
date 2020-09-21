@@ -8,14 +8,14 @@
  */
 
 // without this tests stop before running LIPS files
-const ava = require('ava');
+import ava from 'ava';
 
-const {promisify} = require('util');
-const fs = require('fs');
+import { promisify } from 'util';
+import fs from 'fs';
 const readFile = promisify(fs.readFile);
 const readDir = promisify(fs.readdir);
 
-const lips = require('./src/lips');
+import lips from './src/lips.js';
 
 readDir('./tests/').then(function(filenames) {
   return Promise.all(filenames.filter(function(file) {

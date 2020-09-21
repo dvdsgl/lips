@@ -6,9 +6,9 @@
   "unpkg": "dist/lips.min.js",
   "scripts": {
     "test": "nyc ava --timeout 10m --verbose test.js",
-    "cc": "nyc report --reporter=text > coverage.json",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jcubic/lips.git"
@@ -31,7 +31,7 @@
   "homepage": "https://github.com/jcubic/lips#readme",
   "eslintConfig": {
     "parserOptions": {
-      "ecmaVersion": 2018,
+      "ecmaVersion": 2020,
       "sourceType": "module",
       "ecmaFeatures": {}
     },
