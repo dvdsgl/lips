@@ -72,7 +72,7 @@ publish:
 jest-test: dist/lips.js
 	@$(JEST) --coverage spec/*.spec.js
 
-test: dist/lips.js
+test:
 	@$(NPM) run test
 
 watch-test:

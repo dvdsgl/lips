@@ -31,7 +31,7 @@
  * Copyright (c) 2014-present, Facebook, Inc.
  * released under MIT license
  *
- * build: Mon, 21 Sep 2020 07:48:21 +0000
+ * build: Mon, 21 Sep 2020 12:00:54 +0000
  */
 var lib = (function (exports) {
 	'use strict';
@@ -10766,7 +10766,7 @@ var lib = (function (exports) {
 	  // obviously '{{/DATE}}' == '{{' + 'DATE}}'; can be removed
 	  // but disablig Tree-shaking is adding lot of not used code so we use this
 	  // hack instead
-	  var date = LString('Mon, 21 Sep 2020 07:48:21 +0000').valueOf();
+	  var date = LString('Mon, 21 Sep 2020 12:00:54 +0000').valueOf();
 
 	  var _date = date === '{{' + 'DATE}}' ? new Date() : new Date(date);
 
@@ -10801,7 +10801,7 @@ var lib = (function (exports) {
 	LString.__className = 'string'; // -------------------------------------------------------------------------
 
 	var version = '1.0.0-beta.5';
-	var date = 'Mon, 21 Sep 2020 07:48:21 +0000';
+	var date = 'Mon, 21 Sep 2020 12:00:54 +0000';
 	var balanced_parenthesis = balanced;
 	var balancedParenthesis = balanced;
 	var env = user_env;

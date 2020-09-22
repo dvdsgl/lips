@@ -1,0 +1,19 @@
+{
+  "all": true,
+  "es-modules": true,
+  "include": [
+    "src/**/*.js"
+  ],
+  "cache": false,
+  "exclude": [
+    "_*",
+    "dist/*.js",
+    "bin/*.js",
+    "src/banner.js"
+  ],
+  "lines": 0,
+  "functions": 0,
+  "branches": 0,
+  "statements": 0,
+  "check-coverage": true
+}
