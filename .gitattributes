@@ -1,7 +1,7 @@
-* text eol=lf
-.* text eol=lf
+#* text eol=lf
+#.* text eol=lf
 dist/* binary
 package-lock.json binary
 assets/classDiagram.svg binary
-tests/snapshots/* binary
+#tests/snapshots/* binary
 *.xcm binary

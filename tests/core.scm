@@ -119,7 +119,7 @@
         (t.is (if () 1 2) 1)
         (t.is (if #f 1 2) 2)))
 
-(test "core: and/or"
+(test.failing "core: and/or"
       (lambda (t)
         (t.is (and) #t)
         (t.is (or) #f)
@@ -316,7 +316,7 @@
           (t.is (to.throw (try (Promise.reject 10) (finally (set! x 10))))true)
           (t.is x 10))))
 
-(test.skip "core: try..catch should stop execution"
+(test.failing "core: try..catch should stop execution"
            (lambda (t)
              (let ((result #f))
                (try
